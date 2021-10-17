@@ -51,6 +51,7 @@ public class GatewayClassPathWarningAutoConfiguration {
 	@ConditionalOnMissingClass("org.springframework.web.reactive.DispatcherHandler")
 	protected static class WebfluxMissingFromClasspathConfiguration {
 
+		// Webflux 类检验
 		public WebfluxMissingFromClasspathConfiguration() {
 			log.warn(BORDER + "Spring Webflux is missing from the classpath, "
 					+ "which is required for Spring Cloud Gateway at this time. "

@@ -50,6 +50,7 @@ class GatewayRedisAutoConfiguration {
 	@Bean
 	@SuppressWarnings("unchecked")
 	public RedisScript redisRequestRateLimiterScript() {
+		// redis脚本 request_rate_limiter 请求限流
 		DefaultRedisScript redisScript = new DefaultRedisScript<>();
 		redisScript.setScriptSource(
 				new ResourceScriptSource(new ClassPathResource("META-INF/scripts/request_rate_limiter.lua")));

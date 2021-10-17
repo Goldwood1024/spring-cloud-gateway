@@ -79,19 +79,25 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 				&& exchange.getRequest().getURI().getPort() == this.managementPort) {
 			return Mono.empty();
 		}
+		// 设置Mapping上下文 ServerWebExchangeUtils.gatewayHandlerMapper=RoutePredicateHandlerMapping
 		exchange.getAttributes().put(GATEWAY_HANDLER_MAPPER_ATTR, getSimpleName());
 
+		// 查找路由
 		return lookupRoute(exchange)
 				// .log("route-predicate-handler-mapping", Level.FINER) //name this
 				.flatMap((Function<Route, Mono<?>>) r -> {
+					// 移除 ServerWebExchangeUtils.gatewayPredicateRouteAttr
 					exchange.getAttributes().remove(GATEWAY_PREDICATE_ROUTE_ATTR);
 					if (logger.isDebugEnabled()) {
 						logger.debug("Mapping [" + getExchangeDesc(exchange) + "] to " + r);
 					}
 
+					// 将路由添加到上下文中 ServerWebExchangeUtils.gatewayRoute
 					exchange.getAttributes().put(GATEWAY_ROUTE_ATTR, r);
+					// 返回Mapping的webHandler(FilteringWebHandler)
 					return Mono.just(webHandler);
 				}).switchIfEmpty(Mono.empty().then(Mono.fromRunnable(() -> {
+					// 未找到路由返回空
 					exchange.getAttributes().remove(GATEWAY_PREDICATE_ROUTE_ATTR);
 					if (logger.isTraceEnabled()) {
 						logger.trace("No RouteDefinition found for [" + getExchangeDesc(exchange) + "]");
@@ -119,6 +125,7 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 	}
 
 	protected Mono<Route> lookupRoute(ServerWebExchange exchange) {
+		// 通过路由定位器获取路由信息
 		return this.routeLocator.getRoutes()
 				// individually filter routes so that filterWhen error delaying is not a
 				// problem
@@ -140,6 +147,7 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 					if (logger.isDebugEnabled()) {
 						logger.debug("Route matched: " + route.getId());
 					}
+					// 校验路由
 					validateRoute(route, exchange);
 					return route;
 				});
