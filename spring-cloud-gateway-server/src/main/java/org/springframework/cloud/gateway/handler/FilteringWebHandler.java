@@ -118,11 +118,12 @@ public class FilteringWebHandler implements WebHandler {
 		public Mono<Void> filter(ServerWebExchange exchange) {
 			return Mono.defer(() -> {
 				if (this.index < filters.size()) {
+					// 获取当前索引的过滤器
 					GatewayFilter filter = filters.get(this.index);
-					// 过滤器链
+					// 构建当前索引的下一个过滤器的 FilterChain
 					DefaultGatewayFilterChain chain = new DefaultGatewayFilterChain(this, this.index + 1);
 
-					// 调用过滤器
+					// 调用过滤器的 filter 方法执行过滤器
 					return filter.filter(exchange, chain);
 				}
 				else {
