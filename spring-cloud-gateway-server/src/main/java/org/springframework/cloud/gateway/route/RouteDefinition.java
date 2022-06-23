@@ -44,14 +44,17 @@ public class RouteDefinition {
 
 	@NotEmpty
 	@Valid
+	// 断言
 	private List<PredicateDefinition> predicates = new ArrayList<>();
 
 	@Valid
+	// 过滤器
 	private List<FilterDefinition> filters = new ArrayList<>();
 
 	@NotNull
 	private URI uri;
 
+	// 附加属性
 	private Map<String, Object> metadata = new HashMap<>();
 
 	private int order = 0;

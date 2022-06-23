@@ -16,16 +16,16 @@
 
 package org.springframework.cloud.gateway.config;
 
-import reactor.core.publisher.Flux;
-
 import org.springframework.cloud.gateway.route.RouteDefinition;
 import org.springframework.cloud.gateway.route.RouteDefinitionLocator;
+import reactor.core.publisher.Flux;
 
 /**
  * @author Spencer Gibb
  */
 public class PropertiesRouteDefinitionLocator implements RouteDefinitionLocator {
 
+	// 配置文件的路由信息
 	private final GatewayProperties properties;
 
 	public PropertiesRouteDefinitionLocator(GatewayProperties properties) {

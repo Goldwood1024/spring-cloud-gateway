@@ -16,10 +16,6 @@
 
 package org.springframework.cloud.gateway.handler;
 
-import java.util.function.Function;
-
-import reactor.core.publisher.Mono;
-
 import org.springframework.cloud.gateway.config.GlobalCorsProperties;
 import org.springframework.cloud.gateway.route.Route;
 import org.springframework.cloud.gateway.route.RouteLocator;
@@ -27,13 +23,12 @@ import org.springframework.core.env.Environment;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.reactive.handler.AbstractHandlerMapping;
 import org.springframework.web.server.ServerWebExchange;
+import reactor.core.publisher.Mono;
 
-import static org.springframework.cloud.gateway.handler.RoutePredicateHandlerMapping.ManagementPortType.DIFFERENT;
-import static org.springframework.cloud.gateway.handler.RoutePredicateHandlerMapping.ManagementPortType.DISABLED;
-import static org.springframework.cloud.gateway.handler.RoutePredicateHandlerMapping.ManagementPortType.SAME;
-import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.GATEWAY_HANDLER_MAPPER_ATTR;
-import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.GATEWAY_PREDICATE_ROUTE_ATTR;
-import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.GATEWAY_ROUTE_ATTR;
+import java.util.function.Function;
+
+import static org.springframework.cloud.gateway.handler.RoutePredicateHandlerMapping.ManagementPortType.*;
+import static org.springframework.cloud.gateway.support.ServerWebExchangeUtils.*;
 
 /**
  * @author Spencer Gibb
@@ -49,7 +44,7 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 	private final ManagementPortType managementPortType;
 
 	public RoutePredicateHandlerMapping(FilteringWebHandler webHandler, RouteLocator routeLocator,
-			GlobalCorsProperties globalCorsProperties, Environment environment) {
+										GlobalCorsProperties globalCorsProperties, Environment environment) {
 		this.webHandler = webHandler;
 		this.routeLocator = routeLocator;
 
@@ -95,6 +90,7 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 					// 将路由添加到上下文中 ServerWebExchangeUtils.gatewayRoute
 					exchange.getAttributes().put(GATEWAY_ROUTE_ATTR, r);
 					// 返回Mapping的webHandler(FilteringWebHandler)
+					// 返回需要执行的过滤器
 					return Mono.just(webHandler);
 				}).switchIfEmpty(Mono.empty().then(Mono.fromRunnable(() -> {
 					// 未找到路由返回空
@@ -125,24 +121,21 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 	}
 
 	protected Mono<Route> lookupRoute(ServerWebExchange exchange) {
-		// 通过路由定位器获取路由信息
+		// 通过路由定位器获取路由信息 RouteDefinitionRouteLocator
 		return this.routeLocator.getRoutes()
 				// individually filter routes so that filterWhen error delaying is not a
 				// problem
 				.concatMap(route -> Mono.just(route).filterWhen(r -> {
-					// add the current route we are testing
-					exchange.getAttributes().put(GATEWAY_PREDICATE_ROUTE_ATTR, r.getId());
-					return r.getPredicate().apply(exchange);
-				})
+							// add the current route we are testing
+							exchange.getAttributes().put(GATEWAY_PREDICATE_ROUTE_ATTR, r.getId());
+							// 判断路由是否符合条件
+							return r.getPredicate().apply(exchange);
+						})
 						// instead of immediately stopping main flux due to error, log and
 						// swallow it
 						.doOnError(e -> logger.error("Error applying predicate for route: " + route.getId(), e))
 						.onErrorResume(e -> Mono.empty()))
-				// .defaultIfEmpty() put a static Route not found
-				// or .switchIfEmpty()
-				// .switchIfEmpty(Mono.<Route>empty().log("noroute"))
 				.next()
-				// TODO: error handling
 				.map(route -> {
 					if (logger.isDebugEnabled()) {
 						logger.debug("Route matched: " + route.getId());
@@ -163,7 +156,8 @@ public class RoutePredicateHandlerMapping extends AbstractHandlerMapping {
 	 * <p>
 	 * The default implementation is empty. Can be overridden in subclasses, for example
 	 * to enforce specific preconditions expressed in URL mappings.
-	 * @param route the Route object to validate
+	 *
+	 * @param route    the Route object to validate
 	 * @param exchange current exchange
 	 * @throws Exception if validation failed
 	 */

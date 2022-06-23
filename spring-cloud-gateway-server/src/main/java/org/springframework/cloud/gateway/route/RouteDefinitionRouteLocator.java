@@ -92,7 +92,9 @@ public class RouteDefinitionRouteLocator implements RouteLocator {
 
 	@Override
 	public Flux<Route> getRoutes() {
-		Flux<Route> routes = this.routeDefinitionLocator.getRouteDefinitions().map(this::convertToRoute);
+		// 把路由定义转成Route
+		Flux<Route> routes = this.routeDefinitionLocator.getRouteDefinitions() // 获取配置和持久化的路由
+				.map(this::convertToRoute);
 
 		if (!gatewayProperties.isFailOnRouteDefinitionError()) {
 			// instead of letting error bubble up, continue
@@ -113,7 +115,9 @@ public class RouteDefinitionRouteLocator implements RouteLocator {
 	}
 
 	private Route convertToRoute(RouteDefinition routeDefinition) {
+		//  获取路由判断器
 		AsyncPredicate<ServerWebExchange> predicate = combinePredicates(routeDefinition);
+		// 获取该路由要的过滤器
 		List<GatewayFilter> gatewayFilters = getFilters(routeDefinition);
 
 		return Route.async(routeDefinition).asyncPredicate(predicate).replaceFilters(gatewayFilters).build();
