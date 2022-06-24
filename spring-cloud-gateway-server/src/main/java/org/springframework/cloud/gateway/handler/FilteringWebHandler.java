@@ -80,7 +80,7 @@ public class FilteringWebHandler implements WebHandler {
 
 		// 组合全局过滤器和网管配置的过滤器
 		List<GatewayFilter> combined = new ArrayList<>(this.globalFilters);
-		// 网关过滤器放入全局过滤器后
+		// 网关过滤器，每个路由配置的过滤器
 		combined.addAll(gatewayFilters);
 		// TODO: needed or cached?
 		// 排序
